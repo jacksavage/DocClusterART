@@ -10,6 +10,7 @@ class FuzzyArt:
         self.learn_rate = learn_rate
         self.categories = []
         self.category_counts = []
+        self.category_committed = []
 
     def train(self, pattern: np.array):
         # check that pattern is the correct length
@@ -52,11 +53,17 @@ class FuzzyArt:
         # add a new one
         self.categories.append(np.ones(self.pattern_size))
         self.category_counts.append(0)
+        self.category_committed.append(False)
         return N
 
     def learn_pattern(self, J: int, pattern: np.array):
         category = self.categories[J]
-        category = self.learn_rate * np.minimum(pattern, category) + (1 - self.learn_rate) * category
+        # Fast commit slow recode eq.8 in paper https://doi.org/10.1016/0893-6080(91)90056-B
+        if self.category_committed[J]:
+            category = self.learn_rate * np.minimum(pattern, category) + (1 - self.learn_rate) * category
+        else:
+            category = np.minimum(pattern, category)
+            self.category_committed[J] = True
         self.categories[J] = category
         self.category_counts[J] += 1
 
